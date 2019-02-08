@@ -27,7 +27,7 @@ class UserController extends Controller
         }
         return $token;
     }
-    
+
     public function login(Request $request)
     {
         $user = \App\User::where('email', $request->email)->get()->first();
@@ -40,6 +40,37 @@ class UserController extends Controller
         }
         else
           $response = ['success'=>false, 'data'=>'Record doesnt exists'];
+
+        return response()->json($response, 201);
+    }
+    public function register(Request $request)
+    {
+        $payload = [
+            'password'=>\Hash::make($request->password),
+            'email'=>$request->email,
+            'name'=>$request->name,
+            'auth_token'=> ''
+        ];
+
+        $user = new \App\User($payload);
+        if ($user->save())
+        {
+
+            $token = self::getToken($request->email, $request->password); // generate user token
+
+            if (!is_string($token))  return response()->json(['success'=>false,'data'=>'Token generation failed'], 201);
+
+            $user = \App\User::where('email', $request->email)->get()->first();
+
+            $user->auth_token = $token; // update user token
+
+            $user->save();
+
+            $response = ['success'=>true, 'data'=>['name'=>$user->name,'id'=>$user->id,'email'=>$request->email,'auth_token'=>$token]];
+        }
+        else
+            $response = ['success'=>false, 'data'=>'Couldnt register user'];
+
 
         return response()->json($response, 201);
     }
