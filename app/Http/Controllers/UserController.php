@@ -53,7 +53,13 @@ class UserController extends Controller
         ];
 
         $user = new \App\User($payload);
-        if ($user->save())
+        try{
+            $sw = $user->save();
+        }catch(\Exception $e){
+            $sw = false;
+            return $e; 
+        }
+        if ($sw)
         {
 
             $token = self::getToken($request->email, $request->password); // generate user token
